@@ -1,0 +1,145 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package v01;
+
+/**
+ * V01 - Simulate ATM’s operation
+ * 
+ * @author nhatduy.ce190982 TranNhatDuy
+ */
+public class Account {
+
+    private String id;
+    private String accountName;
+    private double balance;
+    private String currency;
+
+    /**
+     * Constructor to initialize an Account object with given details.
+     * 
+     * @param id Account ID
+     * @param accountName Name of the account holder
+     * @param balance Initial balance in the account
+     * @param currency Currency type of the account
+     */
+    public Account(String id, String accountName, double balance, String currency) {
+        this.id = id;
+        this.accountName = accountName;
+        this.balance = balance;
+        this.currency = currency;
+    }
+
+    /**
+     * Default constructor to create an empty Account object.
+     */
+    public Account() {
+    }
+
+    /**
+     * Gets the account ID.
+     * 
+     * @return Account ID
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * Sets the account ID.
+     * 
+     * @param id Account ID to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * Gets the account holder name.
+     * 
+     * @return Account holder name
+     */
+    public String getAccountName() {
+        return accountName;
+    }
+
+    /**
+     * Sets the account holder name.
+     * 
+     * @param accountName Account holder name to set
+     */
+    public void setAccountName(String accountName) {
+        this.accountName = accountName;
+    }
+
+    /**
+     * Gets the current balance of the account.
+     * 
+     * @return Account balance
+     */
+    public double getBalance() {
+        return balance;
+    }
+
+    /**
+     * Sets the current balance of the account.
+     * 
+     * @param balance Balance to set
+     */
+    public void setBalance(double balance) {
+        this.balance = balance;
+    }
+
+    /**
+     * Gets the currency type of the account.
+     * 
+     * @return Currency of the account
+     */
+    public String getCurrency() {
+        return currency;
+    }
+
+    /**
+     * Sets the currency type of the account.
+     * 
+     * @param currency Currency to set
+     */
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    /**
+     * Converts the Account object to a string representation.
+     * 
+     * @return String representation of the Account object
+     */
+    @Override
+    public String toString() {
+        return "Account{" + "id=" + id + ", accountName=" + accountName + ", balance=" + balance + ", currency=" + currency + '}';
+    }
+
+    /**
+     * Converts a CSV line into an Account object.
+     * 
+     * @param line CSV formatted string containing account information
+     * @return true if the line is successfully converted to an Account object, false otherwise
+     */
+    public boolean fromString(String line) {
+        String[] parts = line.split(",");
+        if (parts.length != 4) {
+            return false; // Return false if the line does not contain 4 parts
+        }
+        this.id = parts[0];
+        this.accountName = parts[1];
+        try {
+            this.balance = Double.parseDouble(parts[2]); // Try to parse balance as a double
+        } catch (NumberFormatException e) {
+            return false; // Return false if balance is not a valid number
+        }
+        this.currency = parts[3];
+        return true; // Successfully created Account object
+    }
+
+}
