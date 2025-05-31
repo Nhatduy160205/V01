@@ -1,0 +1,267 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package v01;
+
+import java.util.InputMismatchException;
+import java.util.Scanner;
+
+/**
+ * V01 - Simulate ATM’s operation
+ *
+ * @author nhatduy.ce190982 TranNhatDuy The Manager class handles ATM operations
+ * such as login, account registration, withdrawal, and money transfer.
+ */
+public class Manager {
+
+    private AccountRepository repository;
+    private Scanner scanner;
+
+    /**
+     * Constructor to initialize the Manager class.
+     */
+    public Manager() {
+        this.repository = new AccountRepository();
+        this.scanner = new Scanner(System.in);
+    }
+
+    /**
+     * Handles user login. User must enter the account ID and PIN correctly.
+     */
+    public void handleLogin() {
+        try {
+            while (true) { // Check if Account ID and PIN are not left blank
+                System.out.print("Enter Account ID: ");
+                String accountId = scanner.next();
+                System.out.print("Enter PIN: ");
+                String pin = scanner.next();
+                if (accountId.isEmpty() || pin.isEmpty()) {
+                    System.out.println("Account ID or PIN cannot be empty. Please enter both.");
+                    continue;  // Return early if either field is empty
+                }
+                // Check if the account ID is the correct 14 digits
+                if (!accountId.matches("^\\d{14}$")) {
+                    System.out.println("Account ID must consist of exactly 14 digits. Please try again.");
+                    continue;  // Return early if Account ID is invalid
+                }
+                // Check if the PIN is correct 6 digits
+                if (!pin.matches("^\\d{6}$")) {
+                    System.out.println("PIN must consist of exactly 6 digits. Please try again.");
+                    continue;  // Return early if PIN is invalid
+                }
+                // Check if login is successful after both fields are entered
+                if (repository.login(accountId, pin)) {
+                    System.out.println("Login successful!");
+                    handleATMOperations(accountId);
+                    break;
+                } else {
+                    System.out.println("Invalid Account ID or PIN. Please try again.");
+                }
+            }
+        } catch (Exception e) { // handle exception
+            System.out.println("An error occurred while processing your login. Please try again.");
+        }
+    }
+
+    /**
+     * Handles the main ATM operations after login.
+     *
+     * @param accountId The account ID of the logged-in user.
+     */
+    private void handleATMOperations(String accountId) {
+        int choice = -1;
+        do {
+            try {
+                System.out.println("\n--- ATM Operations ---");
+                System.out.println("1. Withdraw Money");
+                System.out.println("2. Transfer Money");
+                System.out.println("3. Logout");
+                System.out.print("Enter your choice: ");
+
+                // Catch error when user enters non-integer
+                choice = scanner.nextInt();
+
+                switch (choice) {
+                    case 1:
+                        handleWithdraw(accountId);
+                        break;
+                    case 2:
+                        handleTransfer(accountId);
+                        break;
+                    case 3:
+                        System.out.println("Logging out...");
+                        break;
+                    default:
+                        System.out.println("Invalid choice, please try again.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+                scanner.nextLine();  // Clear the buffer
+            }
+        } while (choice != 3);
+    }
+
+    /**
+     * Handles the money withdrawal operation.
+     *
+     * @param accountId The account ID of the logged-in user.
+     */
+    private void handleWithdraw(String accountId) {
+        double amount;
+        while (true) {
+            try {
+                System.out.print("Enter amount to withdraw: ");
+                amount = scanner.nextDouble();
+                // Check if the amount is positive
+                if (amount <= 0) {
+                    System.out.println("Withdrawal amount must be positive. Please try again.");
+                    continue; // Continue loop if amount is not positive
+                }
+                // Check if withdrawal is successful
+                if (repository.withdraw(accountId, amount)) {
+                    System.out.println("Withdrawal successful.");
+                    break; // Exit the loop if withdrawal is successful
+                } else {
+                    System.out.println("Insufficient balance or invalid amount.");
+                    break; // Exit the loop if balance is insufficient
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a valid number.");
+                scanner.nextLine(); // Clear the buffer to handle invalid input
+            }
+        }
+    }
+
+    /**
+     * Handles the money transfer operation.
+     *
+     * @param accountId The account ID of the logged-in user.
+     */
+    private void handleTransfer(String accountId) {
+        System.out.print("Enter recipient's Account ID: ");
+        String toAccountId = scanner.next();
+        System.out.print("Enter amount to transfer: ");
+        double amount = scanner.nextDouble();
+        // Check if transfer is successful
+        if (repository.transfer(accountId, toAccountId, amount)) {
+            System.out.println("Transfer successful.");
+        } else {
+            System.out.println("Transfer failed. Check balance or account details.");
+        }
+    }
+
+    /**
+     * Handles the account registration process, including setting a new PIN.
+     */
+    public void handleRegisterAccount() {
+        try {
+            String accountId = "";
+            while (true) {
+                System.out.print("Enter Account ID (14 digits): ");
+                accountId = scanner.nextLine().trim();  // Loại bỏ khoảng trắng ở đầu và cuối
+                // Check if account ID is empty or contains only spaces
+                if (accountId.isEmpty()) {
+                    System.out.println("Account ID cannot be empty or contain only spaces. Please try again.");
+                    continue;  // Continue loop until valid input is entered
+                }
+                // Check if account ID is valid (exactly 14 digits)
+                if (accountId.length() != 14 || !accountId.matches("^\\d{14}$")) {
+                    System.out.println("Account ID must be exactly 14 digits. Please try again.");
+                    continue;  // Continue loop until valid input is entered
+                }
+                // Check if account already exists
+                if (repository.accountExists(accountId)) {
+                    System.out.println("Account already exists!");
+                    break;
+                }
+                break;  // Exit the loop if all checks pass
+            }
+            String accountName = "";
+            while (true) {
+                System.out.print("Enter Account Name: ");
+                accountName = scanner.nextLine().trim();  // Loại bỏ khoảng trắng
+
+                // Check if account name is valid (non-empty and contains only letters and spaces)
+                if (accountName.isEmpty()) {
+                    System.out.println("Account name cannot be empty. Please try again.");
+                    continue;  // Continue loop until valid input is entered
+                }
+                // Check if account name contains only letters and spaces (no numbers or special characters)
+                if (!accountName.matches("^[a-zA-Z\\s]+$")) {
+                    System.out.println("Account name must contain only letters and spaces. Please try again.");
+                    continue;  // Continue loop until valid input is entered
+                }
+                // Check if there are 2 consecutive spaces
+                if (accountName.contains("  ")) {
+                    System.out.println("Account name cannot contain consecutive spaces. Please try again.");
+                    continue; // Continue loop until valid input is entered
+                }
+                break;
+            }
+            double balance = 0;
+            while (true) {
+                System.out.print("Enter initial balance: ");
+                try {
+                    balance = scanner.nextDouble();
+                    scanner.nextLine();
+                    // Check if negative number
+                    if (balance < 0) {
+                        System.out.println("Initial balance cannot be negative. Please enter a positive value.");
+                        continue; // Continue loop until valid input is entered
+                    }
+                    break; // Exit loop if balance input is valid
+                } catch (InputMismatchException e) {
+                    System.out.println("Invalid balance amount. Please enter a valid number.");
+                    scanner.nextLine(); // Clear the buffer
+                }
+            }
+            String currency = "";
+            while (true) {
+                System.out.print("Enter Currency (USD, VND, etc.): ");
+                currency = scanner.nextLine().trim();  // Loại bỏ khoảng trắng
+                // Check if currency is valid (non-empty)
+                if (currency.isEmpty()) {
+                    System.out.println("Currency cannot be empty or contain only spaces. Please try again.");
+                    continue;  // Continue loop until valid input is entered
+                }
+                // Check if account name contains only letters and spaces (no numbers or special characters)
+                if (!accountName.matches("^[a-zA-Z\\s]+$")) {
+                    System.out.println("Account name must contain only letters and spaces. Please try again.");
+                    continue;  // Continue loop until valid input is entered
+                }
+                // Check for multiple spaces between words (e.g., "US D")
+                if (currency.contains("  ")) {
+                    System.out.println("Currency cannot contain multiple spaces between words. Please try again.");
+                    continue;  // Continue loop until valid input is entered
+                }
+                break;  // Exit the loop if currency is valid
+            }
+            String pin = "";
+            while (true) {
+                System.out.print("Enter PIN (6 digits): ");
+                pin = scanner.nextLine().trim();
+                // Check if pin is valid (non-empty)
+                if (pin.isEmpty()) {
+                    System.out.println("Pin cannot be empty or contain only spaces. Please try again.");
+                    continue;  // Continue loop until valid input is entered
+                }
+                // Check if PIN is valid (exactly 6 digits)
+                if (pin.length() != 6 || !pin.matches("^\\d{6}$")) {
+                    System.out.println("PIN must be exactly 6 digits. Please try again.");
+                    continue;  // Continue loop until valid input is entered
+                }
+                break;  // Exit the loop if PIN is valid
+            }
+            Account newAccount = new Account(accountId, accountName, balance, currency);
+            repository.addAccount(newAccount);
+            // Save the card data
+            repository.addCard(accountId, pin);
+            System.out.println("Account registered successfully!");
+
+        } catch (Exception e) {
+            System.out.println("An error occurred during account registration. Please try again.");
+        }
+    }
+}
