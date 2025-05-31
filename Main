@@ -1,0 +1,65 @@
+package v01;
+
+import java.util.Scanner;
+
+/**
+ * V01 - Simulate ATM’s operation
+ *
+ * @author nhatduy.ce190982 TranNhatDuy
+ */
+public class V01 {
+
+    /**
+     * Main method that runs the ATM simulator
+     *
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        // Initialize Manager object to manage ATM operations
+        Manager manager = new Manager();
+        // Create AccountRepository object to load data from files
+        AccountRepository accountRepository = new AccountRepository();
+        // Set the AccountRepository object into the Manager (assuming Manager needs it)
+        accountRepository.loadCards();
+        accountRepository.loadAccounts();
+        // Create a Scanner object to read user input
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\n--- ATM Simulator ---");
+            System.out.println("1. Login");
+            System.out.println("2. Register Account");
+            System.out.println("3. Exit");
+            System.out.print("Enter your choice: ");
+
+            // Handle user input inside try-catch to catch invalid choices
+            try {
+                int choice = scanner.nextInt();  // Read the user choice as an integer
+
+                // Process the user's choice based on the menu
+                switch (choice) {
+                    case 1:
+                        // Handle login operation
+                        manager.handleLogin();
+                        break;
+                    case 2:
+                        // Handle account registration
+                        manager.handleRegisterAccount();
+                        break;
+                    case 3:
+                        // Exit the program
+                        System.out.println("Exiting ATM simulator. Goodbye!");
+                        scanner.close();  // Close the scanner before exiting
+                        return;  // Exit the program
+                    default:
+                        // If the input is not valid, inform the user
+                        System.out.println("Error: Invalid choice. Please enter a number between 1 and 3.");
+                }
+            } catch (Exception e) {
+                // Catch and handle invalid input (e.g., if a non-integer is entered)
+                System.out.println("Error: Invalid input. Please enter a valid number between 1 and 3.");
+                scanner.nextLine();  // Clear the buffer to prevent infinite loop of invalid input
+            }
+        }
+    }
+}
