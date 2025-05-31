@@ -1,0 +1,238 @@
+/*
+ * The AccountRepository class manages account and ATM card data,
+ * including file reading/writing and operations on in-memory data.
+ */
+package v01;
+
+import java.io.*;
+import java.util.*;
+
+/**
+ * V01 - Simulate ATM’s operation
+ *
+ * @author nhatduy.ce190982 TranNhatDuy
+ */
+public class AccountRepository {
+
+    private static final String CARDS_FILE = "cards.txt";
+    private static final String ACCOUNTS_FILE = "accounts.txt";
+    private Map<String, String> cardPinMap = new HashMap<>();
+    private Map<String, Account> accounts = new HashMap<>();
+
+    /**
+     * Constructor initializes AccountRepository by loading data from files into
+     * memory.
+     */
+    public AccountRepository() {
+        // Call the method to load card data from file
+        loadCards();
+        // Call the method to load account data from file
+        loadAccounts();
+    }
+
+    /**
+     * Loads card data from the CARDS_FILE into cardPinMap. Each line in the
+     * file has format: "account,pin". Clears existing data before loading.
+     */
+    public final void loadCards() {
+        cardPinMap.clear(); // Clear the old data in the map before loading new data
+        try (BufferedReader br = new BufferedReader(new FileReader(CARDS_FILE))) {
+            String line;
+            // Read each line of the file until the end
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 2) {
+                    cardPinMap.put(parts[0], parts[1]);
+                }
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
+    /**
+     * Loads account data from ACCOUNTS_FILE into accounts map. Each line is
+     * converted to an Account object. Clears existing data before loading.
+     */
+    public final void loadAccounts() {
+        accounts.clear();
+        try (BufferedReader br = new BufferedReader(new FileReader(ACCOUNTS_FILE))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                Account acc = new Account();
+                if (acc.fromString(line)) {   // If successfully loaded data from the string
+                    accounts.put(acc.getId(), acc); // Add to the map with the account ID as key
+                }
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
+    /**
+     * Saves all card data from cardPinMap back to CARDS_FILE. Overwrites the
+     * existing file. Each line written in format: "account,pin".
+     */
+    public void saveCards() {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(CARDS_FILE))) {
+            // Iterate through each entry in the map
+            for (Map.Entry<String, String> entry : cardPinMap.entrySet()) {
+                // Write each line in the format "account,pin"
+                pw.println(entry.getKey() + "," + entry.getValue());
+            }
+        } catch (IOException e) {
+            System.out.println("Error writing card file."); // Notify if writing file fails
+        }
+    }
+
+    /**
+     * Saves all account data from accounts map back to ACCOUNTS_FILE.
+     * Overwrites the existing file. Each line written using Account toString()
+     * format.
+     */
+    public void saveAccounts() {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(ACCOUNTS_FILE))) {
+            // Iterate through each Account object in the map
+            for (Account acc : accounts.values()) {
+                // Write the string representation of the account (using Account's toString)
+                pw.println(acc.toString());
+            }
+        } catch (IOException e) {
+            System.out.println("Error writing account file."); // Notify if writing file fails
+        }
+    }
+
+    /**
+     * Checks if a card with given accountId exists in the card data.
+     *
+     * @param accountId Account number to check
+     * @return true if card exists, false otherwise
+     */
+    public boolean cardExists(String accountId) {
+        return cardPinMap.containsKey(accountId);
+    }
+
+    /**
+     * Checks if an account with given accountId exists in the account data.
+     *
+     * @param accountId Account number to check
+     * @return true if account exists, false otherwise
+     */
+    public boolean accountExists(String accountId) {
+        return accounts.containsKey(accountId);
+    }
+
+    /**
+     * Adds a new card entry (accountId and pin) and saves to file.
+     *
+     * @param accountId Account number
+     * @param pin PIN associated with the account
+     */
+    public void addCard(String accountId, String pin) {
+        cardPinMap.put(accountId, pin);
+        saveCards();
+    }
+
+    /**
+     * Adds a new Account object and saves to file.
+     *
+     * @param acc Account object to add
+     */
+    public void addAccount(Account acc) {
+        accounts.put(acc.getId(), acc);
+        saveAccounts();
+    }
+
+    /**
+     * Retrieves the PIN for a given accountId.
+     *
+     * @param accountId Account number
+     * @return PIN string or null if not found
+     */
+    public String getPin(String accountId) {
+        return cardPinMap.get(accountId);
+    }
+
+    /**
+     * Retrieves the Account object for a given accountId.
+     *
+     * @param accountId Account number
+     * @return Account object or null if not found
+     */
+    public Account getAccount(String accountId) {
+        return accounts.get(accountId);
+    }
+
+    /**
+     * Updates an existing Account in memory and saves the changes to file.
+     *
+     * @param acc Account object with updated data
+     */
+    public void updateAccount(Account acc) {
+        accounts.put(acc.getId(), acc);
+        saveAccounts();
+    }
+
+    /**
+     * Checks user login information.
+     *
+     * @param accountId Account ID
+     * @param pin PIN
+     * @return true if login is successful, false if not successful
+     */
+    public boolean login(String accountId, String pin) {
+        return cardPinMap.containsKey(accountId) && cardPinMap.get(accountId).equals(pin);
+    }
+
+    /**
+     * Withdraws money from an account.
+     *
+     * @param accountId Account ID
+     * @param amount Amount to withdraw
+     * @return true if the transaction is successful, false if insufficient balance
+     */
+    public boolean withdraw(String accountId, double amount) {
+        Account account = accounts.get(accountId);
+        if (account != null && account.getBalance() >= amount) {
+            account.setBalance(account.getBalance() - amount);  // Decrease account balance
+            saveAccounts();  // Save the changes
+            logTransaction("Withdraw", accountId, amount);  // Log the transaction
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Transfer money from one account to another.
+     *
+     * @param fromAccountId Source account
+     * @param toAccountId Target account
+     * @param amount Amount to transfer
+     * @return true if the transaction is successful, false if not successful
+     */
+    public boolean transfer(String fromAccountId, String toAccountId, double amount) {
+        Account fromAccount = accounts.get(fromAccountId);
+        Account toAccount = accounts.get(toAccountId);
+        if (fromAccount != null && toAccount != null && fromAccount.getBalance() >= amount) {
+            fromAccount.setBalance(fromAccount.getBalance() - amount);  // Decrease source account balance
+            toAccount.setBalance(toAccount.getBalance() + amount);  // Increase target account balance
+            saveAccounts();  // Save the changes
+            logTransaction("Transfer", fromAccountId, amount);  // Log the transfer transaction
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Logs the transaction to a file.
+     *
+     * @param transactionType Transaction type (withdraw, transfer, etc.)
+     * @param accountId Account ID performing the transaction
+     * @param amount Transaction amount
+     */
+    private void logTransaction(String transactionType, String accountId, double amount) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter("transactions.txt", true))) { // Open the file in append mode
+            pw.println(transactionType + "," + accountId + "," + amount);
+        } catch (IOException e) {
+            System.out.println("Error logging transaction.");
+        }
+    }
+}
